@@ -363,14 +363,14 @@
   		"type": "constructor"
   	}
   ];
-  var saleAddress = '0x3C3cadFb27bf116Bc712231a87CcE05043230999';
+  var saleAddress = '0xEB7B89919b0d40b120276647352b52c6106D0DCE';
 
   var saleContract = web3.eth.contract(saleABI).at(saleAddress);
 
   // These values could be determined dynamically at runtime, but they never
   // change, so there's no harm in hard-coding them, and it saves us network
   // round-trips.
-  var tokenAddress = '0x55024E2e7F7Dede0210690a3B103fdb8c3912031';
+  var tokenAddress = '0xc99c82b59DEf42aCb6b541Aa1D1c789E8905ccBB';
   var tokenContract = web3.eth.contract(minimalTokenABI).at(tokenAddress);
   var decimals = 18;
   var price = 100000000000000;
