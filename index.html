@@ -161,9 +161,9 @@
 
     <main class="mw7 center" role="main">
       
-<script src='./js/web3.min.js'></script>
-<script src='.js/ethereumjs-all-2018-1-17.min.js'></script>
-<script src='.js/moment.min.js'></script>
+<script src='js/web3.min.js'></script>
+<script src='js/ethereumjs-all-2018-1-17.min.js'></script>
+<script src='js/moment.min.js'></script>
 
 <div class='flex-l mt2 w8 center article-container'>
 <article class="cf pv5 ph3 ph4-ns w-100">
@@ -365,13 +365,13 @@
   ];
   var saleAddress = '0xEB7B89919b0d40b120276647352b52c6106D0DCE';
 
-  var saleContract = web3.eth.contract(saleABI).at(saleAddress);
+  var saleContract;
 
   // These values could be determined dynamically at runtime, but they never
   // change, so there's no harm in hard-coding them, and it saves us network
   // round-trips.
   var tokenAddress = '0xc99c82b59DEf42aCb6b541Aa1D1c789E8905ccBB';
-  var tokenContract = web3.eth.contract(minimalTokenABI).at(tokenAddress);
+  var tokenContract;
   var decimals = 18;
   var price = 100000000000000;
 
@@ -419,6 +419,7 @@
 
     var numberOfTokens = web3.toBigNumber($('#number').val());
     saleContract.buyTokens.sendTransaction(numberOfTokens, {
+      from:web3.eth.coinbase,
       value: numberOfTokens.mul(price),
     }, function () {
       // Nothing to do here. If the transaction is successful, it will trigger
@@ -442,7 +443,7 @@
 
     // Fetch in parallel
     // User's balance
-    tokenContract.balanceOf.call(web3.eth.defaultAccount, {}, blockNumber,
+    tokenContract.balanceOf.call(web3.eth.coinbase, {}, blockNumber,
       function (err, _balance) {
         if (err) return error(err);
         balance = _balance;
@@ -464,7 +465,17 @@
       });
   }
 
-  function initialize() {
+  async function initialize() {
+    await ethereum.request({ method: 'eth_requestAccounts' });
+    var initialAccount = web3.eth.coinbase;
+        window.setInterval(function () {
+          if (web3.eth.coinbase !== initialAccount) {
+            window.location.reload();
+          }
+        }, 500);
+    saleContract = web3.eth.contract(saleABI).at(saleAddress);
+    tokenContract = web3.eth.contract(minimalTokenABI).at(tokenAddress);
+
     web3.eth.getBlockNumber(function (err, lastSeenBlock) {
       // Load data for the initial block
       loadData(lastSeenBlock);
@@ -486,13 +497,13 @@
       // We display the user's balance as well as the sale contract's
       // balance, so we need to monitor transfers to both.
       tokenContract.Transfer({
-        to: [ saleAddress, web3.eth.defaultAccount ]
+        to: [ saleAddress, web3.eth.coinbase ]
       }, changeHandler);
 
       // To display an accurate balance, we also need to monitor transfers out
       // of the user's account.
       tokenContract.Transfer({
-        from: web3.eth.defaultAccount
+        from: web3.eth.coinbase
       }, changeHandler);
     });
   }
@@ -508,18 +519,19 @@
         error("Wrong network detected. Please switch to the Ropsten test network.");
       } else {
         log("Connected to the Ropsten test network.");
-        if (web3.eth.defaultAccount === undefined) {
-          error("No accounts found. If you're using MetaMask, " +
-  				      "please unlock it first.");
-        } else {
+        // if (web3.eth.coinbase === null) {
+          // error("No accounts found. If you're using MetaMask, " +
+          //       "please unlock it first.");
+        //   // await ethereum.request({ method: 'eth_requestAccounts' });
+        // } else {
           initialize();
-        }
-        var initialAccount = web3.eth.defaultAccount;
-        window.setInterval(function () {
-          if (web3.eth.defaultAccount !== initialAccount) {
-            window.location.reload();
-          }
-        }, 500);
+        // }
+        // var initialAccount = web3.eth.coinbase;
+        // window.setInterval(function () {
+        //   if (web3.eth.coinbase !== initialAccount) {
+        //     window.location.reload();
+        //   }
+        // }, 500);
       }
     }
   });
